@@ -7,7 +7,7 @@
 // 3) Replace placeholder image URLs with your son's photos in the `GALLERY_IMAGES` array.
 // 4) This component is default-exported. Import into App.jsx and render.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FaBirthdayCake, FaMapMarkerAlt, FaClock, FaHeart } from 'react-icons/fa';
 import i1 from "../Images/i1.png"
@@ -22,6 +22,7 @@ import G5 from "../Images/G5.jpg"
 import G7 from "../Images/G7.jpg"
 import G6 from "../Images/G6.png"
 import G8 from "../Images/G8.png"
+import mp3 from '../Images/music.mp3'
 
 import logo  from '../Images/logo.png'
 import LiveVisitorCounter from './LiveVisitorCounter';
@@ -125,6 +126,37 @@ const [wishes, setWishes] = useState([]);
 const [showWishBox, setShowWishBox] = useState(false);
 
 
+const audioRef = useRef(null);
+const [unlocked, setUnlocked] = useState(false);
+
+
+useEffect(() => {
+  const unlock = () => {
+    if (!audioRef.current) return;
+
+    audioRef.current.play()
+      .then(() => {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        setUnlocked(true);
+      })
+      .catch(() => {});
+
+    window.removeEventListener("pointerdown", unlock);
+  };
+
+  window.addEventListener("pointerdown", unlock);
+  return () => window.removeEventListener("pointerdown", unlock);
+}, []);
+
+useEffect(() => {
+  if (countdown.finished && unlocked && audioRef.current) {
+    audioRef.current.play();
+  }
+}, [countdown.finished, unlocked]);
+
+
+
   useEffect(() => {
     localStorage.setItem('birthday_wishes_v1', JSON.stringify(wishes));
   }, [wishes]);
@@ -215,27 +247,25 @@ async function addWish(e) {
 
               
             {/* Countdown OR Celebration */}
-            {countdown.finished ? (
-           <div className="relative w-full h-64 flex flex-col items-center justify-center overflow-hidden">
-  {/* Smaller heading */}
-  <h2 className="text-2xl md:text-4xl font-bold text-yellow-400 mb-4 text-center drop-shadow-lg">
-    🎉 Happy Birthday TeJansh! 🎉
-  </h2>
+     {countdown.finished ? (
+  <div className="relative w-full h-64 flex flex-col items-center justify-center overflow-hidden">
+    {/* Smaller heading */}
+    <h2 className="text-2xl md:text-4xl font-bold text-yellow-400 mb-4 text-center drop-shadow-lg">
+      🎉 Happy Birthday TeJansh! 🎉
+    </h2>
 
-  {/* Balloons with thin strings */}
-  {Array.from({ length: 12 }).map((_, idx) => (
-    <FloatingBalloon
-      key={idx}
-      color={['#F87171', '#34D399', '#60A5FA', '#FBBF24'][idx % 4]}
-      style={{ left: `${Math.random() * 90}%`, bottom: `-10%` }}
-      delay={Math.random() * 3}
-      stringWidth={1} // pass string width if you modify FloatingBalloon
-    />
-  ))}
-</div>
-
-            ) : (
-              <div className="flex gap-4 items-center flex-wrap">
+    {/* Balloons with thin strings */}
+    {Array.from({ length: 12 }).map((_, idx) => (
+      <FloatingBalloon
+        key={idx}
+        color={['#F87171', '#34D399', '#60A5FA', '#FBBF24'][idx % 4]}
+        style={{ left: `${Math.random() * 90}%`, bottom: `-10%` }}
+        delay={Math.random() * 3}
+        stringWidth={1}
+      />
+    ))}
+  </div>
+) : (
                 <div className="flex gap-3 items-center">
                   <div className="rounded-lg bg-white/5 px-4 py-3 text-center">
                     <div className="text-xs opacity-80">Days</div>
@@ -254,8 +284,10 @@ async function addWish(e) {
                     <div className="text-2xl font-semibold">{String(countdown.seconds).padStart(2, '0')}</div>
                   </div>
                 </div>
-              </div>
-            )}
+)}
+<audio ref={audioRef} src={mp3} loop preload="auto" />
+
+
 
           <div className="mt-3 text-sm opacity-80 flex items-center gap-3">
   🎉 <span>Double Celebration: <strong>TeJansh – Dec 27 • Dad – Dec 28</strong></span>
